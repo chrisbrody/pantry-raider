@@ -13,6 +13,7 @@ import Link from "next/link"; // Import Link
 // --- Define the expected type for the data returned by the query ---
 interface PantryUserWithPantry {
     pantry_id: string; // From pantryusers
+    user_id: string; // Add user_id here, as it's selected implicitly by the join or needed for context
     role: string;      // From pantryusers
     can_edit: boolean; // From pantryusers
     pantry: {          // Nested object from the joined 'pantries' table (aliased as 'pantry')
@@ -33,9 +34,10 @@ export default async function ProtectedPage() {
     const supabase = await createServerClient();
 
     // Fetch all pantries the user is a member of by querying pantryusers and joining pantries
-    const { data, error } = await supabase // Fetch data into a generic 'data' variable first
+    const { data, error } = await supabase
         .from('pantryusers') // Query the pantryusers table (lowercase)
-        .select('pantry_id, role, can_edit, pantry:pantry_id(*)') // Select fields from pantryusers and join related pantry data (lowercase)
+        // Ensure user_id is selected explicitly or implicitly if needed later
+        .select('pantry_id, user_id, role, can_edit, pantry:pantry_id(*)') // Select fields from pantryusers and join related pantry data (lowercase)
         .eq('user_id', user.id); // Filter by the logged-in user's ID
 
     if (error) {
@@ -47,9 +49,10 @@ export default async function ProtectedPage() {
         );
     }
 
-    // --- Explicitly type the data variable ---
-    const pantryUsers: PantryUserWithPantry[] | null = data;
-    // --- End Type Application ---
+    // --- Use a Type Assertion here ---
+    // Tell TypeScript to treat 'data' as PantryUserWithPantry[] | null
+    const pantryUsers = data as PantryUserWithPantry[] | null;
+    // --- End Type Assertion ---
 
 
     // Check if the user has any pantry memberships
@@ -80,7 +83,7 @@ export default async function ProtectedPage() {
                                     {/* Link to the specific pantry page */}
                                     <Link href={`/dashboard/pantries/${pantryUser.pantry_id}`} className="block no-underline text-inherit">
                                         {/* Access pantry details from the nested 'pantry' object */}
-                                        {/* TypeScript now knows pantryUser has a 'pantry' property */}
+                                        {/* TypeScript now knows pantryUser is PantryUserWithPantry */}
                                         <h3 className="font-semibold">{pantryUser.pantry?.name || 'Unnamed Pantry'}</h3>
                                         {pantryUser.pantry?.description && <p className="text-sm text-gray-600">{pantryUser.pantry.description}</p>}
                                         {/* Optionally display the user's role */}
