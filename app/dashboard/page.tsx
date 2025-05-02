@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
 import { InfoIcon } from "lucide-react";
 import { protectRoute } from "@/utils/auth-guard";
