@@ -1,16 +1,14 @@
+'use client';
+
 import { signOutAction } from "@/app/actions";
 import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { createClient } from "@/utils/supabase/server";
+import { useSupabaseAuth } from "@/context/AuthContext";
 
-export default async function AuthButton() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function AuthButton() {
+  const { user, loading, signOut } = useSupabaseAuth();
 
   if (!hasEnvVars) {
     return (
@@ -50,7 +48,6 @@ export default async function AuthButton() {
   }
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
       <form action={signOutAction}>
         <Button type="submit" variant={"outline"}>
           Sign out
