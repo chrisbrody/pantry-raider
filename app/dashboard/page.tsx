@@ -10,12 +10,30 @@ import Link from "next/link"; // Import Link
 // type Pantry = Database['public']['Tables']['pantries']['Row'];
 // type PantryUser = Database['public']['Tables']['pantryusers']['Row'];
 
+// --- Define the expected type for the data returned by the query ---
+interface PantryUserWithPantry {
+    pantry_id: string; // From pantryusers
+    role: string;      // From pantryusers
+    can_edit: boolean; // From pantryusers
+    pantry: {          // Nested object from the joined 'pantries' table (aliased as 'pantry')
+        id: string; // From pantries
+        name: string; // From pantries
+        description: string | null; // From pantries
+        created_at: string; // From pantries (or Date, depending on fetch options)
+        user_id: string; // From pantries (the creator's ID)
+        // Add any other columns from the 'pantries' table you select with '*'
+    } | null; // The joined 'pantry' object could theoretically be null if the join fails
+}
+// --- End Type Definition ---
+
+
 export default async function ProtectedPage() {
-    const user = await protectRoute();
+    const user = await protectRoute(); // User is guaranteed to be logged in here
+
     const supabase = await createServerClient();
 
     // Fetch all pantries the user is a member of by querying pantryusers and joining pantries
-    const { data: pantryUsers, error } = await supabase
+    const { data, error } = await supabase // Fetch data into a generic 'data' variable first
         .from('pantryusers') // Query the pantryusers table (lowercase)
         .select('pantry_id, role, can_edit, pantry:pantry_id(*)') // Select fields from pantryusers and join related pantry data (lowercase)
         .eq('user_id', user.id); // Filter by the logged-in user's ID
@@ -28,6 +46,11 @@ export default async function ProtectedPage() {
             </div>
         );
     }
+
+    // --- Explicitly type the data variable ---
+    const pantryUsers: PantryUserWithPantry[] | null = data;
+    // --- End Type Application ---
+
 
     // Check if the user has any pantry memberships
     const hasPantries = pantryUsers && pantryUsers.length > 0;
@@ -57,6 +80,7 @@ export default async function ProtectedPage() {
                                     {/* Link to the specific pantry page */}
                                     <Link href={`/dashboard/pantries/${pantryUser.pantry_id}`} className="block no-underline text-inherit">
                                         {/* Access pantry details from the nested 'pantry' object */}
+                                        {/* TypeScript now knows pantryUser has a 'pantry' property */}
                                         <h3 className="font-semibold">{pantryUser.pantry?.name || 'Unnamed Pantry'}</h3>
                                         {pantryUser.pantry?.description && <p className="text-sm text-gray-600">{pantryUser.pantry.description}</p>}
                                         {/* Optionally display the user's role */}
