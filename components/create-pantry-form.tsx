@@ -1,13 +1,8 @@
 // components/create-pantry-form.tsx
-'use client'; // Keep this line
+'use client';
 
 import { useState } from 'react';
-import { createClient as createClientComponentClient } from '@/utils/supabase/client'; // Use your client-side utility
-import { useRouter } from 'next/navigation'; // Import useRouter
-// REMOVE: import { revalidatePath } from 'next/cache'; // Remove this import
-
-// Assuming you have generated types, otherwise remove <Database>
-// import { Database } from '@/types/supabase';
+import { createPantryWithOwner } from '@/app/actions'; // Import the Server Action
 
 interface CreatePantryFormProps {
     userId: string; // Pass the user ID from the server component
@@ -18,43 +13,24 @@ export default function CreatePantryForm({ userId }: CreatePantryFormProps) {
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Get the client-side Supabase client
-    const supabase = createClientComponentClient(); // Use your client utility
-
-    // Get the router instance
-    const router = useRouter(); // Initialize useRouter
+    const [success, setSuccess] = useState<boolean>(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setSuccess(false);
 
-        // Insert the new pantry into the database
-        const { data, error } = await supabase
-            .from('pantries')
-            .insert([
-                {
-                    name: name,
-                    description: description,
-                    user_id: userId, // Associate the pantry with the user
-                },
-            ]);
+        const result = await createPantryWithOwner(name, description, userId);
 
-        if (error) {
-            console.error('Error creating pantry:', error);
-            setError(error.message);
+        if (!result.success) {
+            setError(result.error);
         } else {
-            console.log('Pantry created successfully:', data);
-            // Clear the form
+            console.log('Pantry created successfully:', result.pantryId);
+            setSuccess(true);
             setName('');
             setDescription('');
-            // Optionally show a success message
-
-            // --- Use router.refresh() to trigger a re-fetch of the page data ---
-            router.refresh(); // Refresh the current route
-
-            // revalidatePath('/dashboard'); // REMOVE this line
+            // Server Action handles revalidation
         }
 
         setLoading(false);
@@ -84,6 +60,7 @@ export default function CreatePantryForm({ userId }: CreatePantryFormProps) {
                 />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
+            {success && <p className="text-green-500 text-sm">Pantry created successfully!</p>}
             <button
                 type="submit"
                 disabled={loading || !name}

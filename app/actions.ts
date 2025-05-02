@@ -4,6 +4,38 @@ import { encodedRedirect } from "@/utils/utils";
 import { createClient } from "@/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidatePath } from 'next/cache';
+
+interface CreatePantryResult {
+  success: boolean;
+  error: string | null;
+  pantryId?: string; // Optional: return the new pantry ID
+}
+
+export async function createPantryWithOwner(
+    name: string,
+    description: string,
+    userId: string // Pass the user ID from the component
+): Promise<CreatePantryResult> {
+  const supabase = await createClient();
+
+  // Call the stored procedure (RPC)
+  const { data: newPantryId, error } = await supabase.rpc('create_pantry_with_owner', {
+    pantry_name: name,
+    pantry_description: description,
+    owner_user_id: userId,
+  });
+
+  if (error) {
+    console.error('Error calling create_pantry_with_owner RPC:', error);
+    return { success: false, error: error.message };
+  }
+
+  // Revalidate the dashboard path to show the new pantry
+  revalidatePath('/dashboard');
+
+  return { success: true, error: null, pantryId: newPantryId as string };
+}
 
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();

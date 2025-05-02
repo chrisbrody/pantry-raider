@@ -3,26 +3,20 @@ CREATE TABLE pantries (
     name text not null,
     description text,
     created_at timestamp with time zone default timezone('utc'::text, now()),
-    -- Add the user_id column
-    user_id uuid not null, -- Make it NOT NULL if every pantry must belong to a user
-    -- Add a foreign key constraint linking user_id to the auth.users table
+    user_id uuid not null, -- Creator/Initial Owner
     CONSTRAINT fk_user
       FOREIGN KEY (user_id)
       REFERENCES auth.users(id)
-      ON DELETE CASCADE -- If a user is deleted, delete their pantries too
 );
 
-CREATE TABLE PantryUsers (
-    pantry_id uuid references Pantries(id) on delete cascade,
+CREATE TABLE pantryusers (
+    pantry_id uuid references pantries(id) on delete cascade,
     user_id uuid references auth.users(id) on delete cascade,
     role text not null check (role in ('owner', 'member')),
     can_edit boolean default true,
     added_at timestamp with time zone default timezone('utc'::text, now()),
     primary key (pantry_id, user_id)
 );
-
-
-
 
 
 CREATE TABLE PantryItems (
