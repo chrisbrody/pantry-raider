@@ -2,6 +2,7 @@
 
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import ManagePantryMembers from "@/components/manage-pantry-members";
 
 interface PantryPageProps {
     params: Promise<{
