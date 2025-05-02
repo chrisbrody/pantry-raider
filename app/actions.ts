@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 interface CreatePantryResult {
   success: boolean;
   error: string | null;
-  pantryId?: string; // Optional: return the new pantry ID
+  pantryId?: string;
 }
 
 export async function createPantryWithOwner(
@@ -35,6 +35,40 @@ export async function createPantryWithOwner(
   revalidatePath('/dashboard');
 
   return { success: true, error: null, pantryId: newPantryId as string };
+}
+
+interface InviteMemberResult {
+  success: boolean;
+  error: string | null;
+  message?: string;
+}
+
+export async function inviteUserToPantry(
+    pantryId: string,
+    inviteeEmail: string,
+    inviterUserId: string // Pass the ID of the user performing the invite
+): Promise<InviteMemberResult> {
+  const supabase = await createClient();
+
+  // Call the RPC function
+  const { data: message, error } = await supabase.rpc('invite_user_to_pantry', {
+    pantry_id_input: pantryId,
+    invitee_email: inviteeEmail,
+    inviter_user_id: inviterUserId,
+  });
+
+  if (error) {
+    console.error('Error calling invite_user_to_pantry RPC:', error);
+    // The RPC raises exceptions with user-friendly messages, return that error message
+    return { success: false, error: error.message };
+  }
+
+  console.log('Invite RPC success:', message);
+
+  // Revalidate the pantry page path to show the new member in the list
+  revalidatePath(`/dashboard/pantries/${pantryId}`);
+
+  return { success: true, error: null, message: message as string };
 }
 
 export const signUpAction = async (formData: FormData) => {
