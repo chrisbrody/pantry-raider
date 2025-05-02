@@ -4,9 +4,9 @@ import { createClient as createServerClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
 interface PantryPageProps {
-    params: {
+    params: Promise<{
         pantryId: string;
-    };
+    }>;
 }
 
 export default async function PantryPage({ params }: PantryPageProps) {
@@ -23,9 +23,6 @@ export default async function PantryPage({ params }: PantryPageProps) {
         redirect('/dashboard?message=Invalid Pantry ID');
     }
 
-    // Now pantryId should be a string (hopefully a UUID) if the route matched correctly
-    console.log('Attempting to fetch pantry with ID:', pantryId);
-
 
     const supabase = await createServerClient();
     const { data: user } = await supabase.auth.getUser(); // Get current user
@@ -34,9 +31,6 @@ export default async function PantryPage({ params }: PantryPageProps) {
         // Should be caught by middleware/auth-guard, but good fallback
         redirect('/sign-in');
     }
-
-    console.log(user)
-    console.log('Logged-in user ID:', user.id);
 
     // --- Access Control Check ---
     // Check if the logged-in user is a member of this pantry
