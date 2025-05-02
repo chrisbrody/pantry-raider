@@ -1,8 +1,15 @@
-CREATE TABLE Pantries (
+CREATE TABLE pantries (
     id uuid primary key default gen_random_uuid(),
     name text not null,
     description text,
-    created_at timestamp with time zone default timezone('utc'::text, now())
+    created_at timestamp with time zone default timezone('utc'::text, now()),
+    -- Add the user_id column
+    user_id uuid not null, -- Make it NOT NULL if every pantry must belong to a user
+    -- Add a foreign key constraint linking user_id to the auth.users table
+    CONSTRAINT fk_user
+      FOREIGN KEY (user_id)
+      REFERENCES auth.users(id)
+      ON DELETE CASCADE -- If a user is deleted, delete their pantries too
 );
 
 CREATE TABLE PantryUsers (
