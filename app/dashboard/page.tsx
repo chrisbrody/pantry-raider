@@ -49,9 +49,9 @@ export default async function ProtectedPage() {
         );
     }
 
-    // --- Use a Type Assertion here ---
-    // Tell TypeScript to treat 'data' as PantryUserWithPantry[] | null
-    const pantryUsers = data as PantryUserWithPantry[] | null;
+    // --- Use 'as unknown as' for a more forceful Type Assertion ---
+    // Tell TypeScript to first treat 'data' as unknown, then as PantryUserWithPantry[] | null
+    const pantryUsers = data as unknown as PantryUserWithPantry[] | null;
     // --- End Type Assertion ---
 
 
